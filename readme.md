@@ -17,12 +17,11 @@
     python ./Preprocess/x.py
     python ./Preprocess/y.py
     ```
-    will create train / valid / test data in ./Data
-
+    will create train / valid / test data in ./Data/ .
+    Note: there should exist training and testing data in path ./Data/training_data/ .
 3. training and inference
     ```
     python main.py
     ```
-    will create final result in ./Output. 
-    
-    Note: there should exist a submission data in path ./Data/training_data which is named: 31_範例繳交檔案.csv.
+    will create trained model and final result in ./Output. 
+    Note: there should exist a submission data in path ./Data/training_data/ which is named: 31_範例繳交檔案.csv.
