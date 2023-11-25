@@ -1,9 +1,9 @@
-# introduce
+# Introduce
 * Preprocess/: store code for preprocess and feature engineering
 * Model/: store code for build model and infer
 * requirements.txt: dependency package
 * main.py: main process for training and inference
-# usage
+# Usage
 
 0. store the data: to store training / testing / submission data into ./Data/training_data/
 1. install package
