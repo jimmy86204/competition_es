@@ -11,6 +11,12 @@ import gc
 from tqdm.auto import tqdm
 
 def merge_all_data(data):
+    '''To merge all feature into a datafame
+    input:
+        data: a list to store all feature, which one element is a list include feature, numerical columns name and categorical columns name
+    output: tuple with shape (3, )
+       merged dataframe, all numerical columns name, all categorical columns name
+    '''
     num_cols = [x[1] for x in data]
     cat_cols = [x[2] for x in data]
     dfs = [x[0].reset_index(drop=True) for x in data]
@@ -18,12 +24,12 @@ def merge_all_data(data):
 
 def counting_features(history, history_all, df):
     '''To calculate using times for chid / cano level in historical data as features
-    intput:
+    input:
         history: historical data with label = 0
         history_all : historical data with  label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     tmp_1 = history.groupby(["chid", "cano"]).size().reset_index(name="cano_counting")
     tmp_2 = history.groupby(["chid"]).size().reset_index(name="total_use_counting")
@@ -41,11 +47,11 @@ def counting_features(history, history_all, df):
 
 def cheat_counting_features(history, df):
     '''To calculate unauthorized use times for chid / cano level in historical data as features
-    intput:
+    input:
         history: historical data with label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     tmp_1 = history.groupby(["chid", "cano"]).label.sum().reset_index(name="cano_cheat_counting")
     tmp_2 = history.groupby(["chid"]).label.sum().reset_index(name="cheat_counting")
@@ -64,11 +70,11 @@ def cheat_counting_features(history, df):
 
 def get_chid_num_cols_history(history, df):
     '''To calculate descriptive statistics for interested numerical columns in historical data as features
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     num_cols_history_df = history.groupby(["chid"])[num_cols].agg(["min", "mean", "max", "std", "sum"])
     num_cols_history_df.columns = [x[0] + "_" + x[1] for x in num_cols_history_df.columns]
@@ -86,11 +92,11 @@ def get_chid_num_cols_history(history, df):
 
 def get_chid_num_by_caon_features(history, df):
     '''To calculate the ratio of the consumer's transaction amount to the normal transaction amount based on historical data 
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     num_cols_history_df = history.groupby(["chid", "cano"])["flam1"].agg(["mean", "max"]).reset_index()
     merged = df.merge(num_cols_history_df, on=["chid", "cano"], how="left")
@@ -102,11 +108,11 @@ def get_chid_num_by_caon_features(history, df):
 
 def get_chid_cate_cols_history(history, df):
     '''To calculate the consumer's consumption status based on categorical data in historical records
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     cat_cols_history_df = history.groupby(["chid"])[cat_cols].agg("nunique").add_suffix("_nunique")
     use_cols = list(cat_cols_history_df.columns)
@@ -115,11 +121,11 @@ def get_chid_cate_cols_history(history, df):
        
 def last_use_features(history, df):
     '''To calculate the time difference between the authorization dates of the consumer's current transaction and their last transaction
-    intput:
+    input:
         history: historical data with label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     df_concat = pd.concat([history, df], axis=0)
     tmp_df_list = []
@@ -136,11 +142,11 @@ def last_use_features(history, df):
 
 def last_cheat_features(history, df):
     '''To calculate the time difference between the consumer's current transaction and the last occurrence of unauthorized usage
-    intput:
+    input:
         history: historical data with label = 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     tmp = history.groupby(["chid"]).locdt.last().reset_index(name=f"last_cheat_locdt")
     df = df.merge(tmp, on=["chid"], how="left").fillna(-999)
@@ -149,11 +155,11 @@ def last_cheat_features(history, df):
 
 def use_frequency_features(history, df):
     '''To calculate the consumer's spending frequency
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     x = history.drop_duplicates(["chid", "locdt"])[["chid", "locdt"]]
     x["locdt_1"] = x.groupby(["chid"]).locdt.shift(1)
@@ -164,11 +170,11 @@ def use_frequency_features(history, df):
     
 def even_use_features(history, df):
     '''To calculate spending habits under specific conditions
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_cols = []
     for col in hobby_features:
@@ -179,11 +185,11 @@ def even_use_features(history, df):
 
 def important_features(history, df):
     '''To calculate the probability of unauthorized usage under specific conditions and provide descriptive statistics
-    intput:
+    input:
         history: historical data with label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_col = []
     for col in important_cols:
@@ -200,11 +206,11 @@ def important_features(history, df):
 
 def hour_hobby_features(history, df):
     '''To calculate the user's spending habits per hour
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_col = []
     for col in important_cols:
@@ -215,11 +221,11 @@ def hour_hobby_features(history, df):
 
 def last_cheat_cano_date(history, df):
     '''To calculate the characteristics of credit card fraud
-    intput:
+    input:
         history: historical data with label = 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     tmp  = history.groupby(["cano"]).locdt.last().reset_index(name="last_cheat_day")
     tmp2 = history.groupby(["cano"]).locdt.nunique().reset_index(name="nunique_cheat_day")
@@ -233,11 +239,11 @@ def last_cheat_cano_date(history, df):
     
 def money_diff_with_history(history, df):
     '''To calculate statistical measures and proportions of transaction amounts under specific conditions
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_cols = []
     for col in money_history_cols:
@@ -258,11 +264,11 @@ def money_diff_with_history(history, df):
 
 def money_diff_with_cheat_history(history, df):
     '''To calculate the similarity between transaction amounts under specific conditions and fraudulent transaction amounts
-    intput:
+    input:
         history: historical data with label = 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_cols = []
     for col in money_history_cols:
@@ -278,11 +284,11 @@ def money_diff_with_cheat_history(history, df):
 
 def train_imformation(history, df):
     '''To calculate the similarity between occurrences and frequency of occurrences in a specific field for a time during the training data cycle and those in past normal transactions
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_cols = ["one_day_counts_hobby_diff", "one_day_chid_counts",
                 "one_day_mcc_counts", "one_day_mchno_counts",
@@ -312,11 +318,11 @@ def train_imformation(history, df):
 
 def period_information(df, day_len):
     '''To calculate the frequency of occurrences in a specific field during the training data cycle
-    intput:
+    input:
         df: training data
         day_len: training data time period length
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     tmp = df.groupby(["chid"]).conam.std().reset_index(name="period_conam_std")
     tmp["period_conam_std"] = tmp["period_conam_std"].fillna(tmp["period_conam_std"].mean())
@@ -341,11 +347,11 @@ def period_information(df, day_len):
    
 def important_prev_period_features(history, df):
     '''To calculate the characteristics of the most recent fraudulent occurrence in a specific field
-    intput:
+    input:
         history: historical data with label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_col = []
     period = 5 # 4 or 5
@@ -365,11 +371,11 @@ def important_prev_period_features(history, df):
 
 def mchno_and_mcc_features(history, df):
     '''To calculate the descriptive statistics of transaction amounts for a specific field on a given day
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     tmp1 = df.groupby(["locdt", "mchno"]).csmam.skew().reset_index(name="macho_skew")
     tmp2 = df.groupby(["locdt", "mchno"]).csmam.mean().reset_index(name="macho_mean")
@@ -396,10 +402,10 @@ def mchno_and_mcc_features(history, df):
 
 def csmam_rank_pct(df_):
     '''To calculate the percentile of the transaction amount among all transactions today
-    intput:
+    input:
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     df = df_.copy()
     df["csmam_rank_pct"] = df.groupby(["locdt", "mchno"]).csmam.rank(method="min", pct=True)
@@ -407,11 +413,11 @@ def csmam_rank_pct(df_):
     
 def prev_time_information(history, df):
     '''To calculate the characteristics of the most last fraudulent occurrence in a specific field
-    intput:
+    input:
         history: historical data with label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_cols = []
     min_locdt = df.locdt.min()
@@ -433,11 +439,11 @@ def prev_time_information(history, df):
 
 def curr_vs_normal(history, df):
     '''To calculate the ratio of the number of transactions in a specific field to the past data
-    intput:
+    input:
         history: historical data with label = 0
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     use_cols = []
     for col in important_cols:
@@ -452,11 +458,11 @@ def curr_vs_normal(history, df):
 
 def is_last_use(history, df):
     '''To calculate whether the credit card is the last transaction within a time cycle
-    intput:
+    input:
         history: historical data with label = 0, 1
         df: training data
     output: tuple with shape (3, )
-       processed: dataframe, numerical columns name: list, categorical columns name: list
+       processed dataframe, numerical columns name: list, categorical columns name: list
     '''
     df_concat = pd.concat([history, df], axis=0)
     tmp = df_concat.groupby(["cano"]).locdt.last().reset_index(name="last_use_day")
@@ -467,14 +473,14 @@ def is_last_use(history, df):
 
 def feature_engineering(df, history_all, history_0, history_1, train_len):
     '''To do all feature engineering
-    intput:
+    input:
         df: data
         history_all: historical data with label = 0, 1
         history_0: historical data with label = 0
         history_1: historical data with label = 1
         train_len: data time period length
     output: tuple with shape (3, )
-       processed: data with all features, numerical columns, categorical columns
+       processed data with all features, numerical columns, categorical columns
     '''
     train_df = df.copy()
     history_train = history_all.copy()

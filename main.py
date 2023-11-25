@@ -15,7 +15,7 @@ import joblib
 
 def read_train_and_valid(k):
     '''To read train and validation data
-    intput:
+    input:
         k: fold
     output: train and validation data
     '''
@@ -30,7 +30,7 @@ def read_train_and_valid(k):
 
 def read_test():
     '''To read testing data
-    intput: nothing
+    input: nothing
     output: testing data
     '''
     file = open(f'./Data/test.pkl', "rb")
