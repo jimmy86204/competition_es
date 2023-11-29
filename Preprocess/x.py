@@ -471,6 +471,63 @@ def is_last_use(history, df):
     df["gap_to_last"] = df.locdt.max() - df["locdt"]
     return df[["is_last_use_day", "gap_to_last"]], ["gap_to_last"], ["is_last_use_day"]
 
+def oversea(history_, df_):
+    '''To calculate statistical measures of oversea transactions
+    input:
+        history_: historical data with label = 0, 1
+        df_: training data
+    output: tuple with shape (3, )
+       processed dataframe, numerical columns name: list, categorical columns name: list
+    '''
+    history = history_.copy()
+    df = df_.copy()
+    history['is_oversea'] = (((history['stocn']==0) & (history['csmcu']!=70)) | ((history['stocn']!=0) & (history['csmcu']==70))).astype(int)
+    df['is_oversea'] = (((df['stocn']==0) & (df['csmcu']!=70)) | ((df['stocn']!=0) & (df['csmcu']==70))).astype(int)
+    history_oversea = history.loc[history['is_oversea']==1]
+
+    tmp1 = history.groupby(["chid"]).is_oversea.sum().reset_index(name="oversea_sum")
+    tmp2 = history.groupby(["chid"]).is_oversea.mean().reset_index(name="oversea_mean")
+    tmp3 = history_oversea.groupby(["chid"]).conam.mean().reset_index(name="oversea_money_mean")
+    tmp4 = history_oversea.groupby(["chid"]).conam.max().reset_index(name="oversea_money_max")
+
+    df = df.merge(tmp1, on=["chid"], how="left").fillna(0) \
+           .merge(tmp2, on=["chid"], how="left").fillna(0) \
+           .merge(tmp3, on=["chid"], how="left").fillna(0) \
+           .merge(tmp4, on=["chid"], how="left").fillna(0)
+
+    df["diff_oversea_money_mean"]  = df["is_oversea"] * (df["oversea_money_mean"] - df["conam"])
+    df["oversea_money_mean_large"] = df["is_oversea"] * (df["conam"] > df["oversea_money_max"])*1
+
+    return df[["oversea_sum", "oversea_mean", "diff_oversea_money_mean", "oversea_money_mean_large"]], ["oversea_sum", "oversea_mean", "diff_oversea_money_mean", "oversea_money_mean_large"], []
+
+def tag_proportion_features(history_, df_):
+    '''To calculate proportions of specific conditions in normal transactions
+    input:
+        history_: historical data with label = 0
+        df_: training data
+    output: tuple with shape (3, )
+       processed dataframe, numerical columns name: list, categorical columns name: list
+    '''
+    history = history_.copy()
+    df = df_.copy()
+
+    history['etymd_4'] = 0
+    history.loc[history['etymd'] == 4, 'etymd_4'] = 1
+    df['etymd_4'] = 0
+    df.loc[df['etymd'] == 4, 'etymd_4'] = 1
+    history['stocn_twn'] = 0
+    history.loc[history['stocn'] == 0, 'stocn_twn'] = 1
+    df['stocn_twn'] = 0
+    df.loc[df['stocn'] == 0, 'stocn_twn'] = 1
+
+    use_cols = []
+    for col in ['ecfg', 'flg_3dsmk', 'etymd_4', 'stocn_twn']:
+        tmp = history.groupby(["mchno"])[col].value_counts(normalize=True).reset_index(name=f"mchno_{col}_proportion")
+        df = df.merge(tmp, on=["mchno", col], how="left").fillna(0)
+        use_cols.append(f"mchno_{col}_proportion")
+    return df[use_cols], use_cols, []
+
+
 def feature_engineering(df, history_all, history_0, history_1, train_len):
     '''To do all feature engineering
     input:
@@ -555,6 +612,12 @@ def feature_engineering(df, history_all, history_0, history_1, train_len):
 
     print("hobby prev period important hobby")
     train_prev_period_important_hobby = important_prev_period_features(history_train, train_df)
+    
+    print("is end with 99")
+    train_features_is_99 = train_df.conam.apply(lambda x: (x % 100 == 99) * 1).reset_index(name="is_99")[["is_99"]], [], ["is_99"]
+
+    print("is % 100")
+    train_features_is_100 = train_df.conam.apply(lambda x: (x % 100 == 0) * 1).reset_index(name="is_100")[["is_100"]], [], ["is_100"]
 
     print("is % 10")
     train_features_is_10 = train_df.conam.apply(lambda x: (x % 10 == 0) * 1).reset_index(name="is_10")[["is_10"]], [], ["is_10"]
@@ -568,13 +631,19 @@ def feature_engineering(df, history_all, history_0, history_1, train_len):
     print("hour hobby")
     train_hour_hobby_features_df = hour_hobby_features(history_train_label_0, train_df)
 
+    print("oversea")
+    train_oversea = oversea(history_train, train_df)
+
+    print("tag proportion")
+    train_tag_proportion_features = tag_proportion_features(history_train_label_0, train_df)
+
     print("merge all data")
     all_train_features = [train_features_cate, train_features_num, train_features_no_process_num, train_prev_time_information, train_curr_vs_normal,
-                        train_features_counting, train_features_user_num, train_features_user_cate, train_features_is_10, train_features_is_0,
+                        train_features_counting, train_features_user_num, train_features_user_cate, train_features_is_100, train_features_is_99, train_features_is_10, train_features_is_0,
                         train_features_user_last, train_features_user_hobby, train_last_cheat_feature_df, train_features_counting_cheat,
                         train_hour_hobby_features_df, train_features_use_frequency, train_features_user_num_cano, train_prev_period_important_hobby,
                         train_features_history_money, train_features_history_money_cheat, train_crazy_features_df, train_csmam_rank_pct_features_df,
-                        train_cheat_with_card_features_df, train_features_df, train_important_hobby, train_skew_and_kurtosis_features_df, train_is_last_use]
+                        train_cheat_with_card_features_df, train_features_df, train_important_hobby, train_skew_and_kurtosis_features_df, train_is_last_use, train_oversea, train_tag_proportion_features]
 
     
     train_x, use_num_cols, use_cat_cols = merge_all_data(all_train_features)
