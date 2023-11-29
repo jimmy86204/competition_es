@@ -481,8 +481,6 @@ def oversea(history_, df_):
     '''
     history = history_.copy()
     df = df_.copy()
-    history['is_oversea'] = (((history['stocn']==0) & (history['csmcu']!=70)) | ((history['stocn']!=0) & (history['csmcu']==70))).astype(int)
-    df['is_oversea'] = (((df['stocn']==0) & (df['csmcu']!=70)) | ((df['stocn']!=0) & (df['csmcu']==70))).astype(int)
     history_oversea = history.loc[history['is_oversea']==1]
 
     tmp1 = history.groupby(["chid"]).is_oversea.sum().reset_index(name="oversea_sum")
@@ -510,15 +508,6 @@ def tag_proportion_features(history_, df_):
     '''
     history = history_.copy()
     df = df_.copy()
-
-    history['etymd_4'] = 0
-    history.loc[history['etymd'] == 4, 'etymd_4'] = 1
-    df['etymd_4'] = 0
-    df.loc[df['etymd'] == 4, 'etymd_4'] = 1
-    history['stocn_twn'] = 0
-    history.loc[history['stocn'] == 0, 'stocn_twn'] = 1
-    df['stocn_twn'] = 0
-    df.loc[df['stocn'] == 0, 'stocn_twn'] = 1
 
     use_cols = []
     for col in ['ecfg', 'flg_3dsmk', 'etymd_4', 'stocn_twn']:
@@ -659,10 +648,20 @@ if __name__ == "__main__":
     gc.collect()
     train["hour"] = train.loctm.apply(lambda x: int("{:06d}".format(x)[:2]))
     train["hour_6"] = train["hour"] // 6
+    train['is_oversea'] = (((train['stocn']==0) & (train['csmcu']!=70)) | ((train['stocn']!=0) & (train['csmcu']==70))).astype(int)
+    train['etymd_4'] = 0
+    train.loc[train['etymd'] == 4, 'etymd_4'] = 1
+    train['stocn_twn'] = 0
+    train.loc[train['stocn'] == 0, 'stocn_twn'] = 1
     train = train.sort_values(by=["locdt"]).reset_index(drop=True)
 
     test["hour"] = test.loctm.apply(lambda x: int("{:06d}".format(x)[:2]))
     test["hour_6"] = test["hour"] // 6
+    test['is_oversea'] = (((test['stocn']==0) & (test['csmcu']!=70)) | ((test['stocn']!=0) & (test['csmcu']==70))).astype(int)
+    test['etymd_4'] = 0
+    test.loc[test['etymd'] == 4, 'etymd_4'] = 1
+    test['stocn_twn'] = 0
+    test.loc[test['stocn'] == 0, 'stocn_twn'] = 1
     test = test.sort_values(by=["locdt"]).reset_index(drop=True)
 
     important_cols = ["mcc", "mchno", "chid", "stocn", "scity"]
