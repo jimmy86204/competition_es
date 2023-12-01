@@ -632,6 +632,9 @@ def feature_engineering(df, history_all, history_0, history_1, train_len):
     print("hobby important hobby")
     train_important_hobby = important_features(history_train, train_df)
 
+    print("hobby important weekdayhobby")
+    train_important_weekday = important_by_weekday_features(history_train, train_df)
+
     print("hobby prev period important hobby")
     train_prev_period_important_hobby = important_prev_period_features(history_train, train_df)
     
@@ -664,7 +667,7 @@ def feature_engineering(df, history_all, history_0, history_1, train_len):
                         train_features_counting, train_features_user_num, train_features_user_cate, train_features_is_100, train_features_is_99, train_features_is_10, train_features_is_0,
                         train_features_user_last, train_features_user_hobby, train_last_cheat_feature_df, train_features_counting_cheat,
                         train_hour_hobby_features_df, train_features_use_frequency, train_features_user_num_cano, train_prev_period_important_hobby,
-                        train_features_history_money, train_features_history_money_cheat, train_crazy_features_df, train_csmam_rank_pct_features_df,
+                        train_features_history_money, train_features_history_money_cheat, train_crazy_features_df, train_csmam_rank_pct_features_df, train_important_weekday,
                         train_cheat_with_card_features_df, train_features_df, train_important_hobby, train_skew_and_kurtosis_features_df, train_is_last_use, train_oversea, train_tag_proportion_features]
 
     
