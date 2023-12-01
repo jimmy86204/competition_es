@@ -697,6 +697,8 @@ if __name__ == "__main__":
         
         history_train = train[(train.locdt <= start_date)]
         history_valid = train[(train.locdt <= start_date + train_len)]
+        history_train = history_train.groupby('chid').tail(20)
+        history_valid = history_valid.groupby('chid').tail(20)
         history_train_label_0 = history_train[history_train.label == 0].reset_index(drop=True)
         history_valid_label_0 = history_valid[history_valid.label == 0].reset_index(drop=True)
         history_train_label_1 = history_train[history_train.label == 1].reset_index(drop=True)
@@ -724,6 +726,7 @@ if __name__ == "__main__":
         output.close()
     
     history_test = train.copy()
+    history_test = history_test.groupby('chid').tail(20)
     history_test_label_0 = history_test[history_test.label == 0].reset_index(drop=True)
     history_test_label_1 = history_test[history_test.label == 1].reset_index(drop=True)
     test_df = test.copy()
