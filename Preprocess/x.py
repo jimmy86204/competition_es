@@ -204,6 +204,21 @@ def important_features(history, df):
         use_col.append(f"{col}_important_hobby_sum")
     return df[use_col], use_col, []
 
+# def hour_hobby_features(history, df):
+#     '''To calculate the user's spending habits per hour
+#     input:
+#         history: historical data with label = 0
+#         df: training data
+#     output: tuple with shape (3, )
+#        processed dataframe, numerical columns name: list, categorical columns name: list
+#     '''
+#     use_col = []
+#     for col in important_cols:
+#         tmp = history.groupby([col])["hour"].value_counts(normalize=True).reset_index(name=f"{col}_hour_hobby")
+#         df = df.merge(tmp, on=[col, "hour"], how="left").fillna(0)
+#         use_col.append(f"{col}_hour_hobby")
+#     return df[use_col], use_col, []
+
 def hour_hobby_features(history, df):
     '''To calculate the user's spending habits per hour
     input:
@@ -214,9 +229,10 @@ def hour_hobby_features(history, df):
     '''
     use_col = []
     for col in important_cols:
-        tmp = history.groupby([col])["hour"].value_counts(normalize=True).reset_index(name=f"{col}_hour_hobby")
-        df = df.merge(tmp, on=[col, "hour"], how="left").fillna(0)
-        use_col.append(f"{col}_hour_hobby")
+        for time_cols in ["hour", "weekday"]:
+            tmp = history.groupby([col])[time_cols].value_counts(normalize=True).reset_index(name=f"{col}_{time_cols}_hobby")
+            df = df.merge(tmp, on=[col, time_cols], how="left").fillna(0)
+            use_col.append(f"{col}_{time_cols}_hobby")
     return df[use_col], use_col, []
 
 def last_cheat_cano_date(history, df):
@@ -646,6 +662,7 @@ if __name__ == "__main__":
     ori_test = test.copy()
     del train1, train2
     gc.collect()
+    train["weekday"] = train.locdt % 7
     train["hour"] = train.loctm.apply(lambda x: int("{:06d}".format(x)[:2]))
     train["hour_6"] = train["hour"] // 6
     train['is_oversea'] = (((train['stocn']==0) & (train['csmcu']!=70)) | ((train['stocn']!=0) & (train['csmcu']==70))).astype(int)
@@ -655,6 +672,7 @@ if __name__ == "__main__":
     train.loc[train['stocn'] == 0, 'stocn_twn'] = 1
     train = train.sort_values(by=["locdt"]).reset_index(drop=True)
 
+    test["weekday"] = test.locdt % 7
     test["hour"] = test.loctm.apply(lambda x: int("{:06d}".format(x)[:2]))
     test["hour_6"] = test["hour"] // 6
     test['is_oversea'] = (((test['stocn']==0) & (test['csmcu']!=70)) | ((test['stocn']!=0) & (test['csmcu']==70))).astype(int)
@@ -666,11 +684,11 @@ if __name__ == "__main__":
 
     important_cols = ["mcc", "mchno", "chid", "stocn", "scity"]
     use_cat_cols_list = ["etymd", "mcc", "ecfg", "stocn", "stscd", "hcefg", "flg_3dsmk"]
-    cat_cols = ["contp", "etymd", "mcc", "ecfg", "insfg", "bnsfg", "stocn", "stscd", "ovrlt", "flbmk", "hcefg", "csmcu", "flg_3dsmk"]
+    cat_cols = ["contp", "etymd", "mcc", "ecfg", "insfg", "bnsfg", "stocn", "stscd", "ovrlt", "flbmk", "hcefg", "csmcu", "flg_3dsmk", "weekday"]
     num_cols = ["flam1"]
     precoess_cols = ["mchno", "stocn", "scity", "mcc"]
     no_process_num = ["hour", "hour_6"]
-    hobby_features = ["mchno", "mcc", "scity", "ecfg", "stocn"]
+    hobby_features = ["mchno", "mcc", "scity", "ecfg", "stocn"] + ["weekday"]
     even_buy_cols = ["mcc", "stocn", "scity", "mchno"]
     money_history_cols = ["mcc", "mchno", "stocn", "scity"]
 
