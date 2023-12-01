@@ -204,6 +204,23 @@ def important_features(history, df):
         use_col.append(f"{col}_important_hobby_sum")
     return df[use_col], use_col, []
 
+def important_by_weekday_features(history, df):
+    '''To calculate the probability of unauthorized usage under specific conditions with weekday and provide descriptive statistics
+    input:
+        history: historical data with label = 0, 1
+        df: training data
+    output: tuple with shape (3, )
+       processed dataframe, numerical columns name: list, categorical columns name: list
+    '''
+    use_col = []
+    for col in important_cols:
+        tmp = history.groupby([col, "weekday"]).label.mean().reset_index(name=f"{col}_weekday_important_hobby_mean")
+        df = df.merge(tmp, on=[col, "weekday"], how="left")
+        df[f"{col}_weekday_important_hobby_mean"] = df[f"{col}_weekday_important_hobby_mean"].fillna(df[f"{col}_weekday_important_hobby_mean"].mean())
+        use_col.append(f"{col}_weekday_important_hobby_mean")
+
+    return df[use_col], use_col, []
+
 # def hour_hobby_features(history, df):
 #     '''To calculate the user's spending habits per hour
 #     input:
